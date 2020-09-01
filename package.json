@@ -1,0 +1,39 @@
+{
+    "name": "node-red-contrib-ui-mp4-player",
+    "version": "1.0.0",
+    "description": "A Node-RED UI widget node to play (fragmented) mp4 video in the Node-RED dashboard",
+    "dependencies": {
+       "hls.js": "^0.9.0"
+    },
+    "author": {
+        "name": "Bart Butenaers"
+    },
+    "contributors": [
+        {
+            "name": "Kevin Godell",
+            "url": "https://github.com/kevinGodell"
+        }
+    ],
+    "license": "Apache-2.0",
+    "keywords": [
+        "node-red",
+        "mp4",
+        "video",
+        "fragment",
+        "hls",
+        "m3u8"
+    ],   
+    "bugs": {
+        "url": "https://github.com/bartbutenaers/node-red-contrib-ui-mp4-player/issues"
+    },
+    "homepage": "https://github.com/bartbutenaers/node-red-contrib-ui-mp4-player",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/bartbutenaers/node-red-contrib-ui-mp4-player.git"
+    },
+    "node-red": {
+        "nodes": {
+            "ui_mp4_player": "mp4_player.js"
+        }
+    }
+}
