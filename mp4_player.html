@@ -1,0 +1,128 @@
+<!--
+  Copyright 2020, Bart Butenaers & Kevin Godell
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+  http://www.apache.org/licenses/LICENSE-2.0
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+    
+<script type="text/javascript">
+    RED.nodes.registerType('ui_mp4_player',{
+        category: 'dashboard',
+        color: 'rgb( 63, 173, 181)',
+        defaults: {
+            group: {type: 'ui_group', required:true},
+            order: {value: 0},
+            width: {
+                value: 0,
+                validate: function(v) {
+                    var valid = true;
+                    var width = v||0;
+                    var currentGroup = $('#node-input-group').val()|| this.group;
+                    var groupNode = RED.nodes.node(currentGroup);
+                    valid = !groupNode || +width <= +groupNode.width;
+                    $("#node-input-size").toggleClass("input-error",!valid);
+                    return valid;
+                }},
+            height: {value: 0},
+            name: {value: ''},
+            sourceType: {value: "msg"},
+            sourceValue: {value: "payload"},
+            aspectratio: {value: "stretch"}
+        },
+        inputs:1,
+        outputs:1,
+        icon: "font-awesome/fa-film",
+        paletteLabel:"Mp4 player",
+        label: function() {
+            return this.name || "Mp4 player";
+        },
+        oneditprepare: function() {
+            var node = this;
+            
+            debugger;      
+
+            // Make the Node-RED graphical widget size tool available in the config screen
+            $("#node-input-size").elementSizer({
+                width: "#node-input-width",
+                height: "#node-input-height",
+                group: "#node-input-group"
+            });
+            
+            // Custom typedInput option for URLs.  Following these URL tests (https://mathiasbynens.be/demo/url-regex), the regex from Diego Perini is the best regex for URLs.
+            // The Javascript version can be found on https://gist.github.com/dperini/729294#file-regex-weburl-js-L62
+            var urlOption = {
+                value:"url",
+                label:"URL",
+                validate:/^(?:(?:(?:https?|ftp):)?\/\/)(?:\S+(?::\S*)?@)?(?:(?!(?:10|127)(?:\.\d{1,3}){3})(?!(?:169\.254|192\.168)(?:\.\d{1,3}){2})(?!172\.(?:1[6-9]|2\d|3[0-1])(?:\.\d{1,3}){2})(?:[1-9]\d?|1\d\d|2[01]\d|22[0-3])(?:\.(?:1?\d{1,2}|2[0-4]\d|25[0-5])){2}(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))|(?:(?:[a-z0-9\u00a1-\uffff][a-z0-9\u00a1-\uffff_-]{0,62})?[a-z0-9\u00a1-\uffff]\.)+(?:[a-z\u00a1-\uffff]{2,}\.?))(?::\d{2,5})?(?:[/?#]\S*)?$/i
+            }
+            
+            // Show the source value in a typedinput element (dropdown with only 'msg' and 'url')
+            $("#node-input-typed-source").typedInput({types: [urlOption, 'msg']});
+            $("#node-input-typed-source").typedInput('type', node.sourceType);
+            $("#node-input-typed-source").typedInput('value', node.sourceValue);                                                      
+        },
+        oneditsave: function() {
+            var node = this;
+            
+            debugger;
+        
+            // Store both the type and value from the typed input element
+            var source = $("#node-input-typed-source");
+            node.sourceType = source.typedInput('type');
+            node.sourceValue = source.typedInput('value');
+         }
+    });
+</script>
+
+<script type="text/x-red" data-template-name="ui_mp4_player">
+
+    <div class="form-row">
+        <label for="node-input-name"><i class="icon-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    
+    <div class="form-row" id="template-row-group">
+        <label for="node-input-group"><i class="fa fa-table"></i> Group</span></label>
+        <input type="text" id="node-input-group">
+    </div>   
+    
+    <div class="form-row" id="template-row-size">
+        <label><i class="fa fa-object-group"></i> Size</span></label>
+        <input type="hidden" id="node-input-width">
+        <input type="hidden" id="node-input-height">
+        <button class="editor-button" id="node-input-size"></button>
+    </div>
+    
+    </br>
+    
+    <div class="form-row pull-row">
+        <label for="node-input-typed-source"><i class="fa fa-sign-in"></i> Source</label>
+        <input id="node-input-typed-source" type="text" style="width: 70%">
+        <input id="node-input-source" type="hidden">
+    </div>
+    
+    <div class="form-row">
+        <label for="node-input-aspectratio"><i class="fa fa-arrows-alt"></i> Aspect ratio</label>
+        <select id="node-input-aspectratio">
+            <option value="stretch">Stretch</option>
+            <option value="crop">Fit and crop</option>
+            <option value="fit">Fit without crop</option>
+        </select>
+    </div>
+    
+</script>
+<script type="text/x-red" data-help-name="ui_mp4_player">
+    <p>A Node-RED widget node to view mp4 fragments in the dashboard. For more information, see my <a target="_blank" href="https://github.com/bartbutenaers/node-red-contrib-ui-mp4-player">Github</a> page.</p>
+    <p><strong>Source:</strong><br/>
+    The mp4 fragments can arrive from two different kind of sources:
+    <ul>
+        <li><code>URL (pull):</code> Specify an URL from which the dashboard can pull/fetch the mp4 fragments by itself.  The URL can be fixed text or dynamically specified via the input message.</li>
+        <li><code>Message (push):</code> Specify in which input message field the mp4 fragments will arrive, so the mp4 fragments need to be injected via input messages.</li>
+    </ul></p>
+</script>
