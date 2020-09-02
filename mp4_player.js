@@ -120,6 +120,23 @@ module.exports = function(RED) {
                     initController: function($scope, events) {
                         // Remark: all client-side functions should be added here!  
                         // If added above, it will be server-side functions which are not available at the client-side ...
+                        function setupHls(sourceValue, sourceType, autoplay) {
+                            // TODO if there is a previous hls instance, should we cleanup it???
+                            
+                            $scope.hls = new Hls({
+                                liveDurationInfinity: true,
+                                manifestLoadingTimeOut: 1000,
+                                manifestLoadingMaxRetry: 30,
+                                manifestLoadingRetryDelay: 500
+                            });
+                            $scope.hls.loadSource(sourceValue); // TODO this doesn't work when source type "msg", but only for type "url"
+                            $scope.hls.attachMedia($scope.videoElement);
+                            $scope.hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                                if (sourceType === "url" && autoplay) {
+                                       $scope.videoElement.play();  
+                                }
+                            });
+                        }
                         
                         $scope.flag = true;
                 
@@ -138,12 +155,7 @@ module.exports = function(RED) {
                                 return;
                             }
                                 
-                            var hls = new Hls();
-                            hls.loadSource(config.sourceValue); // TODO this doesn't work when source type "msg", but only for type "url"
-                            hls.attachMedia($scope.videoElement);
-                            hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                                $scope.videoElement.play();
-                            });
+                            setupHls(config.sourceValue, config.sourceType, config.autoplay);
                         }
 
                         $scope.$watch('msg', function(msg) { 
@@ -152,6 +164,17 @@ module.exports = function(RED) {
                                 return;
                             }
                             debugger;
+                            
+                            switch(msg.topic) {
+                                case "set_source":
+                                    // It is not enough to call $scope.hls.loadSource since that results in errors on Chrome.
+                                    // Instead create an entire new hls instance, as explained here:
+                                    // https://github.com/video-dev/hls.js/issues/2523
+                                    setupHls(msg.payload, "url", true);
+                                    break;
+                                default:
+                                    console.log("Unknown command in msg.topic");
+                            }
                         })
                     }
                 });
