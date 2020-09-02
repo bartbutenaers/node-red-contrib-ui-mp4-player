@@ -33,7 +33,8 @@
             name: {value: ''},
             sourceType: {value: "msg"},
             sourceValue: {value: "payload"},
-            aspectratio: {value: "stretch"}
+            aspectratio: {value: "stretch"},
+            autoplay: {value: true}
         },
         inputs:1,
         outputs:1,
@@ -114,6 +115,11 @@
             <option value="crop">Fit and crop</option>
             <option value="fit">Fit without crop</option>
         </select>
+    </div>
+
+    <div class="form-row">
+        <input type="checkbox" id="node-input-autoplay" style="display: inline-block; width: auto; vertical-align: top;">
+        <label for="node-input-autoplay" style="width:50%;"> Start playing automatically</label>
     </div>
     
 </script>
