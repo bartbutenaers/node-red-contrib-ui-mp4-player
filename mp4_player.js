@@ -30,33 +30,34 @@ module.exports = function(RED) {
     }
 
     function HTML(config) { 
-        var width;
-        var height;
+        var objectFit;
         var videoPart;
 
         // The configuration is a Javascript object, which needs to be converted to a JSON string
         var configAsJson = JSON.stringify(config);
         
-        // TODO rewrite this part based on css (https://stackoverflow.com/a/14422136)
-        switch (config.aspectratio) {
+        // Resize the video by setting the CSS object-fit attribute.
+        // See image example at https://tympanus.net/codrops/css_reference/object-fit/
+        switch (config.resizing) {
             case "fit":
                 // Keep the aspect ratio and leave the remaining svg area empty.
-                width = "auto";
-                height = "100%"; // stretchy
+                objectFit = "contain";
                 break;
             case "crop":
                 // Keep the aspect ratio and crop part of the image, to fit it in the shortest dimension.
-                width = "100%"; // stretchx
-                height = "auto";
+                objectFit = "cover";
                 break;
             case "stretch":
                 // Don't keep the aspect ratio, i.e. stretch the image in both directions to fit the entire svg area
-                width = "100%";
-                height = "100%";
+                objectFit = "fill";
+                break;
+            case "none":
+                // Don't keep the aspect ratio, i.e. stretch the image in both directions to fit the entire svg area
+                objectFit = "none";
                 break;
         }
         
-        var sourceStyle = "z-index:1; position: relative; width: " + width + "; height: " + height + "; max-width: none; max-height: none; top: 50%; transform: translateY(-50%);";
+        var sourceStyle = "z-index:1; position:relative; width:100%; height:100%; object-fit:" + objectFit + "; max-width:none; max-height:none; top:50%; transform:translateY(-50%);";
         
         // Parent div container.
         // Set height to 'auto' (instead of 100%) because otherwise you will get a vertical scrollbar: reason is that the height or width of the element, are
@@ -64,12 +65,13 @@ module.exports = function(RED) {
         // and bottom margins (applied by the Node-RED parent elements) of 10 pixels each, there will be a scroll bar for the extra 20 pixels.
         // See more detail on https://www.lifewire.com/set-height-html-element-100-percent-3467075.
         // Set the video muted, to avoid "play() failed because the user didn't interact with the document first" ...
+        // TODO remove the pointer-events on the svg tag afterwards: it is added to test the right click popupmenu
         var html = String.raw`<script src= "ui_mp4_player/hls.js"></script>
                               <div style="width: 100%; height: 100%; overflow: hidden; border: 1px solid black;" ng-init='init(` + configAsJson + `)'>
-                                <video id="mp4_player_video_` + config.id + `" style="` + sourceStyle + `" muted>
+                                <video id="mp4_player_video_` + config.id + `" style="` + sourceStyle + `" muted playsinline >
                                     <p>Your browser does not support the HTML5 Video element.</p>
                                 </video>
-                                <svg id="mp4_player_svg_` + config.id + `" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="position: absolute; z-index: 2; left: 0px; top: 0px; width: 100%; height: 100%;">       
+                                <svg id="mp4_player_svg_` + config.id + `" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="position: absolute; z-index: 2; left: 0px; top: 0px; width: 100%; height: 100%; pointer-events:none">       
                                 </svg>
                               </div>`;
         return html;
@@ -120,22 +122,38 @@ module.exports = function(RED) {
                     initController: function($scope, events) {
                         // Remark: all client-side functions should be added here!  
                         // If added above, it will be server-side functions which are not available at the client-side ...
-                        function setupHls(sourceValue, sourceType, autoplay) {
-                            // TODO if there is a previous hls instance, should we cleanup it???
+                        function setupHls(sourceValue, sourceType, autoplay) {                            
+                            // If there is a previous hls instance, then do a cleanup
+                            if($scope.hls && $scope.hls.destroy) {
+                                $scope.hls.destroy();
+                            }
                             
-                            $scope.hls = new Hls({
-                                liveDurationInfinity: true,
-                                manifestLoadingTimeOut: 1000,
-                                manifestLoadingMaxRetry: 30,
-                                manifestLoadingRetryDelay: 500
-                            });
-                            $scope.hls.loadSource(sourceValue); // TODO this doesn't work when source type "msg", but only for type "url"
-                            $scope.hls.attachMedia($scope.videoElement);
-                            $scope.hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                                if (sourceType === "url" && autoplay) {
-                                       $scope.videoElement.play();  
-                                }
-                            });
+                            if (!sourceValue) {
+                               return;
+                            }
+                            
+                            // If media source extensions not supported but native hls support for ios safari
+                            if ($scope.videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+                                $scope.videoElement.src = sourceValue;
+                                $scope.videoElement.addEventListener('loadedmetadata', function() {
+                                    $scope.videoElement.play();
+                                });
+                            }
+                            else {
+                                $scope.hls = new Hls({
+                                    liveDurationInfinity: true,
+                                    manifestLoadingTimeOut: 1000,
+                                    manifestLoadingMaxRetry: 30,
+                                    manifestLoadingRetryDelay: 500
+                                });
+                                $scope.hls.loadSource(sourceValue); // TODO this doesn't work when source type "msg", but only for type "url"
+                                $scope.hls.attachMedia($scope.videoElement);
+                                $scope.hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                                    if (sourceType === "url" && autoplay) {
+                                           $scope.videoElement.play();  
+                                    }
+                                });
+                            }
                         }
                         
                         $scope.flag = true;
