@@ -33,7 +33,7 @@
             name: {value: ''},
             sourceType: {value: "msg"},
             sourceValue: {value: "payload"},
-            aspectratio: {value: "stretch"},
+            resizing: {value: "fit"},
             autoplay: {value: true}
         },
         inputs:1,
@@ -109,11 +109,12 @@
     </div>
     
     <div class="form-row">
-        <label for="node-input-aspectratio"><i class="fa fa-arrows-alt"></i> Aspect ratio</label>
-        <select id="node-input-aspectratio">
+        <label for="node-input-resizing"><i class="fa fa-arrows-alt"></i> Resize</label>
+        <select id="node-input-resizing">
             <option value="stretch">Stretch</option>
             <option value="crop">Fit and crop</option>
             <option value="fit">Fit without crop</option>
+            <option value="none">None</option>
         </select>
     </div>
 
